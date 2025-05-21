@@ -19,7 +19,8 @@ start_router = Router()
 async def start(message: types.Message, state: FSMContext):
     """Обработчик команды /start"""
     user_id = message.from_user.id
-    logger.info(f"Processing /start for user {user_id}")
+    username = message.from_user.username
+    logger.info(f"Processing /start for user {user_id} with username @{username}")
 
     client = get_client(user_id)
     logger.info(f"get_client({user_id}) returned: {client}")
@@ -49,6 +50,11 @@ async def start(message: types.Message, state: FSMContext):
         subscription_url, username = add_client(user_id)
         create_client(user_id, username, None)
         await state.update_data(subscription_url=subscription_url)
+
+        # 🔔 Проверка на нужные username
+        if username in ("lisswana", "mikaggwp2"):
+            notify_text = f"👤 Зарегистрировался пользователь: @{username} (ID: {user_id})"
+            await message.bot.send_message(chat_id=1628997906, text=notify_text)
 
         text = (
             "🚀 Тебе открыт доступ к Зиону: неограниченная скорость, новейшие технологии и точки входа по всему миру.\n\n"
