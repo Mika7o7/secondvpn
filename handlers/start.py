@@ -1,7 +1,8 @@
+import asyncio
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import BufferedInputFile
+from aiogram.types import BufferedInputFile, FSInputFile
 from database import get_client, create_client, update_client_status
 from controlers.add_client import add_client
 from datetime import datetime
@@ -76,10 +77,49 @@ async def start(message: types.Message, state: FSMContext):
             logger.warning("Изображение matrix.jpeg не найдено.")
             await message.answer(text, reply_markup=vless_keyboard(), parse_mode="HTML")
 
+        # Отправка видеоинструкции
+        try:
+            video_file = FSInputFile("videos/setup.mp4")  # путь к твоему видео
+            await message.answer_video(
+                video=video_file,
+                caption="🎬 Инструкция по подключению — смотри и подключайся за 1 минуту!",
+                parse_mode="HTML"
+            )
+        except FileNotFoundError:
+            logger.warning("Видео setup.mp4 не найдено.")
+
+        # Отправка follow-up сообщения через 5 минут
+        asyncio.create_task(send_followup_message(message))
+
     except Exception as e:
         logger.error(f"Failed to create client {user_id}: {e}")
         await message.answer("Ошибка при получении доступа к Зиону. Попробуйте позже или свяжитесь с поддержкой.")
         return
+
+async def send_followup_message(message: types.Message):
+    """Отправка второго сообщения и видео через 5 минут"""
+    await asyncio.sleep(300)  # 5 минут
+
+    try:
+        text = (
+            "✨ Надеюсь, тебе понравится мой сервис!\n\n"
+            "🔧 У меня можно настроить поток\n"
+            "🎥 Смотри инструкцию, чтобы узнать больше 👇"
+        )
+        await message.answer(text)
+
+        try:
+            video_file = FSInputFile("videos/stream_settings.mp4")
+            await message.answer_video(
+                video=video_file,
+                caption="🛠️ Настройка потоков в 2 клика.",
+                parse_mode="HTML"
+            )
+        except FileNotFoundError:
+            logger.warning("Видео stream_settings.mp4 не найдено.")
+
+    except Exception as e:
+        logger.error(f"Ошибка при отправке follow-up сообщения для {message.from_user.id}: {e}")
 
 @start_router.message(Command("support"))
 async def support_cmd(message: types.Message):

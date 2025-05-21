@@ -20,13 +20,11 @@ logger = logging.getLogger(__name__)
 class APIClient:
     def __init__(self, config):
         self.host = config["host"]
-        self.alt_host = config.get("alt_host", None)  # Альтернативный хост (например, IP)
         self.username = config["username"]
         self.password = config["password"]
         self.token_file = config["token_file"]
         self.token = self.load_token()
         self.headers = {"Authorization": f"Bearer {self.token}"} if self.token else None
-        self.ca_cert = "/etc/ssl/certs/ca-certificates.crt"
         self.max_retries = 3
         self.retry_delay = 5
 
@@ -52,8 +50,6 @@ class APIClient:
 
     def login(self):
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
         
         for host in hosts:
             url = f"{host}/api/admin/token"
@@ -66,10 +62,10 @@ class APIClient:
             logger.info(f"Attempting to login to Marzban at {url}")
             for attempt in range(self.max_retries):
                 try:
-                    resp = requests.post(url, json=data, headers=headers, timeout=10, verify=self.ca_cert)
+                    resp = requests.post(url, json=data, headers=headers, timeout=10)
                     if resp.status_code != 200:
                         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-                        resp = requests.post(url, data=data, headers=headers, timeout=10, verify=self.ca_cert)
+                        resp = requests.post(url, data=data, headers=headers, timeout=10)
                     resp.raise_for_status()
                     data = resp.json()
                     self.token = data.get("access_token")
@@ -91,13 +87,11 @@ class APIClient:
             logger.info("No token available")
             return False
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
         
         for host in hosts:
             url = f"{host}/api/admin"
             try:
-                resp = requests.get(url, headers=self.headers, timeout=5, verify=self.ca_cert)
+                resp = requests.get(url, headers=self.headers, timeout=5)
                 if resp.status_code == 200:
                     logger.info(f"Token is valid on {host}")
                     return True
@@ -110,15 +104,14 @@ class APIClient:
         if not self.check_token():
             self.login()
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
+        
         
         for host in hosts:
             url = f"{host}{endpoint}"
             logger.info(f"POST request to {url} with data: {data}")
             for attempt in range(self.max_retries):
                 try:
-                    resp = requests.post(url, json=data or {}, headers=self.headers, timeout=10, verify=self.ca_cert)
+                    resp = requests.post(url, json=data or {}, headers=self.headers, timeout=10)
                     resp.raise_for_status()
                     if not resp.text.strip():
                         logger.error("Empty response received")
@@ -137,15 +130,14 @@ class APIClient:
         if not self.check_token():
             self.login()
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
+        
         
         for host in hosts:
             url = f"{host}{endpoint}"
             logger.info(f"PUT request to {url} with data: {data}")
             for attempt in range(self.max_retries):
                 try:
-                    resp = requests.put(url, json=data or {}, headers=self.headers, timeout=10, verify=self.ca_cert)
+                    resp = requests.put(url, json=data or {}, headers=self.headers, timeout=10)
                     resp.raise_for_status()
                     response_data = resp.json()
                     logger.info(f"PUT response from {host}: {response_data}")
@@ -161,15 +153,14 @@ class APIClient:
         if not self.check_token():
             self.login()
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
+        
         
         for host in hosts:
             url = f"{host}{endpoint}"
             logger.info(f"GET request to {url}")
             for attempt in range(self.max_retries):
                 try:
-                    resp = requests.get(url, headers=self.headers, timeout=10, verify=self.ca_cert)
+                    resp = requests.get(url, headers=self.headers, timeout=10)
                     resp.raise_for_status()
                     return resp.json()
                 except (RequestException, HTTPError) as e:
@@ -183,15 +174,14 @@ class APIClient:
         if not self.check_token():
             self.login()
         hosts = [self.host]
-        if self.alt_host:
-            hosts.append(self.alt_host)
+        
         
         for host in hosts:
             url = f"{host}{endpoint}"
             logger.info(f"DELETE request to {url}")
             for attempt in range(self.max_retries):
                 try:
-                    resp = requests.delete(url, headers=self.headers, timeout=10, verify=self.ca_cert)
+                    resp = requests.delete(url, headers=self.headers, timeout=10)
                     resp.raise_for_status()
                     logger.info(f"Response status from {host}: {resp.status_code}")
                     return {"success": True}

@@ -128,7 +128,7 @@ async def confirm_payment(call: types.CallbackQuery, state: FSMContext):
 
     state_data = await state.get_data()
     # Это для теста
-    payment_token = "ggwp"  # Оставляем ggwp для тестов
+    payment_token = state_data.get("token")
     expected_amount = state_data.get("amount")
     months = state_data.get("months")
     username = state_data.get("username")

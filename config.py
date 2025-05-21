@@ -10,7 +10,6 @@ SUBSCRIPTION_CONFIG = {
 
 MARZBAN_CONFIG = {
     "host": "https://ggwpvpn.duckdns.org:8000",
-    "alt_host": "https://217.18.63.138:8000",  # IP сервера в Латвии
     "username": "mika",
     "password": "Mikaggwp",
     "token_file": "marzban_token.txt"
