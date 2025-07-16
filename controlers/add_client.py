@@ -4,11 +4,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def add_client(tg_id, server_country=None):
+def add_client(tg_id, name, server_country=None):
     """Создаём нового клиента в Marzban и возвращаем VLESS-ссылки"""
     try:
         api_client = APIClient(MARZBAN_CONFIG)
-        links, username = api_client.create_user(tg_id)
+        links, username = api_client.create_user(tg_id, name)
         if not links:
             raise Exception("No VLESS links returned")
         logger.info(f"Created user {username} for tg_id {tg_id} with links: {links}")

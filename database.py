@@ -118,8 +118,8 @@ def update_client_spend(tg_id: int, amount: int):
             cursor = conn.cursor()
             cursor.execute("SELECT spend FROM clients WHERE tg_id = ?", (tg_id,))
             row = cursor.fetchone()
-            previous_spend = int(row[0]) if row and row[0] else 0
-            new_spend = previous_spend + amount
+            previous_spend = row[0] if row and row[0] else 0
+            new_spend = float(previous_spend) + amount
             cursor.execute("UPDATE clients SET spend = ? WHERE tg_id = ?", (str(new_spend), tg_id))
             conn.commit()
             logger.info(f"Updated spend for {tg_id}: {previous_spend} -> {new_spend}")

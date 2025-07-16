@@ -192,9 +192,9 @@ class APIClient:
             logger.error(f"DELETE request failed on {host} after {self.max_retries} attempts")
         raise Exception(f"DELETE request failed on all hosts: {hosts}")
 
-    def create_user(self, tg_id, expiry_days=3):
+    def create_user(self, tg_id, name='', xpiry_days=3):
         """Создаём нового пользователя в Marzban"""
-        username = f"user_{tg_id}_{uuid.uuid4().hex[:8]}"
+        username = f"user_{name}_{uuid.uuid4().hex[:8]}"
         vless_id = str(uuid.uuid4())
         data = {
             "username": username,

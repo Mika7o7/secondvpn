@@ -146,7 +146,7 @@ async def confirm_payment(call: types.CallbackQuery, state: FSMContext):
     try:
         # Устанавливаем временной диапазон для фильтрации
         created_time = datetime.fromisoformat(token_created)
-        date_from = (created_time - timedelta(hours=1)).isoformat()  # 1 час назад
+        date_from = (created_time - timedelta(hours=2)).isoformat()  # 1 час назад
         date_to = (created_time + timedelta(days=1)).isoformat()  # 1 день вперёд
 
         # Проверяем транзакции через /api/timeline с фильтрацией

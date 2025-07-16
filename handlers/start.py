@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 start_router = Router()
 
-
 @start_router.message(Command("start"))
 async def start(message: types.Message, state: FSMContext):
     """Обработчик команды /start"""
@@ -47,13 +46,13 @@ async def start(message: types.Message, state: FSMContext):
     # Новый клиент
     logger.info(f"Creating new client {user_id}")
     try:
-        subscription_url, username = add_client(user_id)
+        telegram_username = message.from_user.username
+        subscription_url, username = add_client(user_id, telegram_username) 
         create_client(user_id, username, None)
         await state.update_data(subscription_url=subscription_url)
 
-        # 🔔 Проверка на нужные username
-        if username in ("lisswana", "mikaggwp2"):
-            notify_text = f"👤 Зарегистрировался пользователь: @{username} (ID: {user_id})"
+        if telegram_username and telegram_username.lower() in ("lisswana", "mikaggwp2"):
+            notify_text = f"👤 Зарегистрировался пользователь: @{telegram_username} (ID: {user_id})"
             await message.bot.send_message(chat_id=1628997906, text=notify_text)
 
         text = (
@@ -83,9 +82,9 @@ async def start(message: types.Message, state: FSMContext):
             logger.warning("Изображение matrix.jpeg не найдено.")
             await message.answer(text, reply_markup=vless_keyboard(), parse_mode="HTML")
 
-        # Отправка видеоинструкции
+        # Отправка видеоинструкции — КАК ВИДЕО
         try:
-            video_file = FSInputFile("videos/setup.mp4")  # путь к твоему видео
+            video_file = FSInputFile("videos/setup.mp4")
             await message.answer_video(
                 video=video_file,
                 caption="🎬 Инструкция по подключению — смотри и подключайся за 1 минуту!",
@@ -149,7 +148,7 @@ async def copy_vless_callback(call: types.CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
     data = await state.get_data()
     subscription_url = data.get("subscription_url")
-    subscription_url = str(subscription_url).replace(".org",".org:8000")
+    subscription_url = str(subscription_url).replace(".org", ".org:8000")
     if subscription_url:
         message_text = f"🔴 Твои ключи к Зиону.\n\n<code>{subscription_url}</code>"
         await call.message.answer(message_text, parse_mode="HTML")
@@ -157,3 +156,4 @@ async def copy_vless_callback(call: types.CallbackQuery, state: FSMContext):
     else:
         await call.message.answer("Ошибка: ключи не найдены. Используй /start.")
         await call.answer()
+
