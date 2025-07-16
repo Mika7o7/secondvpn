@@ -44,14 +44,21 @@ async def check_subscriptions(bot: Bot):
                     await bot.send_message(tg_id, text, reply_markup=extend_keyboard())
                 else:
                     # Проверяем, прошло ли 10 минут с момента отключения
-                    disabled_at_dt = datetime.strptime(disabled_at, "%Y-%m-%d %H:%M:%S")
-                    if (datetime.now() - disabled_at_dt) >= timedelta(minutes=10) and payment_status != "active":
-                        logger.info(f"10 minutes passed since disable for user {tg_id}, deleting inbound {username}")
-                        delete_inbound(tg_id, username)
-                        await bot.send_message(
-                            tg_id,
-                            "🗑️ Твой доступ к Зиону удалён, так как подписка не была продлена. Выбери красную таблетку снова с помощью /start."
-                        )
+                    # Проверяем, прошло ли 10 минут с момента отключения
+                    if disabled_at:
+                        try:
+                            disabled_at_dt = datetime.strptime(disabled_at, "%Y-%m-%d %H:%M:%S")
+                            if (datetime.now() - disabled_at_dt) >= timedelta(minutes=10) and payment_status != "active":
+                                logger.info(f"10 minutes passed since disable for user {tg_id}, deleting inbound {username}")
+                                delete_inbound(tg_id, username)
+                                await bot.send_message(
+                                    tg_id,
+                                    "🗑️ Твой доступ к Зиону удалён, так как подписка не была продлена. Выбери красную таблетку снова с помощью /start."
+                                )
+                        except Exception as e:
+                            logger.error(f"Error while parsing disabled_at for user {tg_id}: {str(e)}")
+                    else:
+                        logger.warning(f"disabled_at is None for user {tg_id}, skipping 10-minute check")
             except Exception as e:
                 logger.error(f"Failed to process client {tg_id}: {str(e)}")
                 await bot.send_message(tg_id, f"❌ Ошибка при обработке твоей подписки: {str(e)}. Свяжитесь с поддержкой.")

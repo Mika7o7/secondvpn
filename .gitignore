@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+*.cache
+*.log
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Pytest / coverage
+.coverage
+.cache/
+htmlcov/
+
+# Environments
+.venv/
+venv/
+env/
+*.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+
+# Video/media files
+*.mp4
+*.avi
+*.mov
+
+# IDE/editor settings
+.vscode/
+.idea/
+
+# Tokens and credentials
+tokens.json
+marzban_token.txt
+
+# Optional: ignore backups
+*~
+*.bak
+*.swp
+
