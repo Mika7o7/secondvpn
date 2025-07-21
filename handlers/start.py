@@ -7,7 +7,7 @@ from database import get_client, create_client, update_client_status
 from controlers.add_client import add_client
 from datetime import datetime
 from config import SUBSCRIPTION_CONFIG
-from keyboards.inline_keyboards import extend_keyboard, vless_keyboard
+from keyboards.inline_keyboards import main_menu_keyboard, vless_keyboard
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ async def start(message: types.Message, state: FSMContext):
                 f"Твой доступ к Зиону активен до {client[3]}.\n"
                 "Продлить доступ к Зиону за 100 руб./мес.?\n\n"
             )
-            await message.answer(text, reply_markup=extend_keyboard(), parse_mode="HTML")
+            await message.answer(text, reply_markup=main_menu_keyboard(), parse_mode="HTML")
             return
 
         except ValueError as e:
@@ -130,14 +130,6 @@ async def send_followup_message(message: types.Message):
 async def support_cmd(message: types.Message):
     await message.answer(
         "📞 [Написать в поддержку](https://t.me/Mikaggwp)",
-        disable_web_page_preview=True,
-        parse_mode="Markdown"
-    )
-
-@start_router.message(Command("channel"))
-async def channel_cmd(message: types.Message):
-    await message.answer(
-        "📢 [Перейти в наш канал](https://t.me/+teMI40exbmk2MGEy)",
         disable_web_page_preview=True,
         parse_mode="Markdown"
     )

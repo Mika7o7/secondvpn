@@ -31,6 +31,56 @@ def init_db():
         logger.error(f"Failed to initialize database: {e}")
         raise
 
+def init_access_keys_table():
+    try:
+        with sqlite3.connect(SUBSCRIPTION_CONFIG['db_path']) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS access_keys (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tg_id INTEGER NOT NULL,
+                    key TEXT NOT NULL,
+                    username TEXT NOT NULL,
+                    name TEXT,
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT
+                );
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_keys_tg_id ON access_keys (tg_id)")
+            conn.commit()
+        logger.info("Access keys table initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize access_keys table: {e}")
+        raise
+
+def save_key(tg_id: int, key: str, username: str, name: str):
+    """Сохраняет новый ключ для пользователя"""
+    try:
+        with sqlite3.connect(SUBSCRIPTION_CONFIG['db_path']) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO access_keys (tg_id, key, username, name, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (tg_id, key, username, name, datetime.now().isoformat()))
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Ошибка при сохранении ключа для пользователя {tg_id}: {e}")
+
+def get_access_keys(tg_id: int):
+    try:
+        with sqlite3.connect(SUBSCRIPTION_CONFIG['db_path']) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, key, expires_at, name
+                FROM access_keys
+                WHERE tg_id = ?
+                ORDER BY id
+            """, (tg_id,))
+            return cursor.fetchall()
+    except Exception as e:
+        logger.error(f"Ошибка при получении ключей пользователя {tg_id}: {e}")
+        return []
+    
 def get_client(tg_id):
     """Получение клиента по tg_id"""
     try:

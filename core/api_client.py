@@ -192,36 +192,70 @@ class APIClient:
             logger.error(f"DELETE request failed on {host} after {self.max_retries} attempts")
         raise Exception(f"DELETE request failed on all hosts: {hosts}")
 
+
     def create_user(self, tg_id, name='', xpiry_days=3):
         """Создаём нового пользователя в Marzban"""
-        username = f"user_{name}_{uuid.uuid4().hex[:8]}"
-        vless_id = str(uuid.uuid4())
-        data = {
-            "username": username,
-            "proxies": {
-                "vless": {
-                    "id": vless_id,
-                    "flow": "xtls-rprx-vision"
-                }
-            },
-            "inbounds": {
-                "vless": ["VLESS TCP REALITY"]
-            },
-            "expire": None,
-            "data_limit": 0,
-            "data_limit_reset_strategy": "no_reset",
-            "status": "on_hold",
-            "note": f"Trial VPN for tg_id {tg_id}",
-            "on_hold_expire_duration": 259200
-        }
-        response = self.post("/api/user", data)
-        if not response.get("username") or not response.get("links"):
-            raise Exception(f"Failed to create user: Invalid response {response}")
-        subscription_url = response.get("subscription_url", [])
-        if not subscription_url:
-            raise Exception("No VLESS subscription_url found in response")
-        logger.info(f"Created user {username} with subscription_url: {subscription_url}")
-        return subscription_url, username
+        try:
+            # Генерируем базовое имя пользователя
+            base_username = f"user_{tg_id}_{uuid.uuid4().hex[:8]}"
+            username = base_username
+            attempt = 0
+            max_attempts = 5
+
+            # Проверяем уникальность имени, добавляя номер при необходимости
+            while attempt < max_attempts:
+                try:
+                    response = self.get(f"/api/user/{username}")
+                    if response.status_code == 404:
+                        break  # Имя свободно
+                    logger.info(f"Username {username} already exists, trying with suffix")
+                    attempt += 1
+                    username = f"{base_username}_{attempt}"
+                except Exception as e:
+                    logger.error(f"Error checking username {username}: {str(e)}")
+                    if response.status_code != 404:
+                        raise
+            if attempt >= max_attempts:
+                raise Exception(f"Could not generate a unique username after {max_attempts} attempts")
+
+            vless_id = str(uuid.uuid4())
+            expire_timestamp = int((datetime.now() + timedelta(days=xpiry_days)).timestamp())
+
+            data = {
+                "username": username,
+                "proxies": {
+                    "vless": {
+                        "id": vless_id,
+                        "flow": "xtls-rprx-vision"
+                    }
+                },
+                "inbounds": {
+                    "vless": ["VLESS TCP REALITY"]
+                },
+                "expire": expire_timestamp,
+                "data_limit": 0,
+                "data_limit_reset_strategy": "no_reset",
+                "status": "active",
+                "note": f"VPN for tg_id {tg_id}"
+            }
+
+            response = self.post("/api/user", data, max_retries=0)  # Без повторов
+            response_data = response.json()
+            if response.status_code != 200 or not response_data.get("username"):
+                logger.error(f"Failed to create user {username}: {response.status_code} - {response.text}")
+                raise Exception(f"Failed to create user: {response.status_code} - {response.text}")
+
+            subscription_url = response_data.get("subscription_url", "")
+            if not subscription_url:
+                logger.error(f"No subscription_url in response: {response_data}")
+                raise Exception("No subscription_url found in response")
+
+            logger.info(f"Created user {username} with subscription_url: {subscription_url}")
+            return subscription_url, username
+
+        except Exception as e:
+            logger.error(f"Failed to create user for tg_id {tg_id}: {str(e)}")
+            raise
 
     def update_user(self, username, data):
         """Обновляем пользователя в Marzban"""

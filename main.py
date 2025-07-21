@@ -7,7 +7,8 @@ from handlers.start import start_router
 from handlers.payments import payments_router
 from handlers.notifications import setup_scheduler
 from handlers.admin import admin_router
-from database import init_db
+# from handlers.access import access_router
+from database import init_db, init_access_keys_table
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,17 +25,19 @@ async def set_bot_commands(bot: Bot):
         BotCommand(command="start", description="Начать"),
         BotCommand(command="extend", description="Продлить подписку"),
         BotCommand(command="support", description="Поддержка"),
-        BotCommand(command="channel", description="Наш канал"),
+        
     ]
     await bot.set_my_commands(commands)
 
 async def main():
     init_db()  # Инициализация базы данных
+    init_access_keys_table()
     bot = Bot(token=BOT_CONFIG["token"])
     dp = Dispatcher()
     dp.include_router(start_router)
     dp.include_router(payments_router)
     dp.include_router(admin_router)
+    # dp.include_router(access_router)с
 
     await set_bot_commands(bot)
     setup_scheduler(bot)

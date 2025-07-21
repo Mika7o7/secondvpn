@@ -1,5 +1,6 @@
 BOT_CONFIG = {
-    "token": "8161622918:AAGXVd-RxMh_Xt3KsAh3ln-UXxpdz5gWTHs",
+    "token": "7223279295:AAG3EvTF_8fjLDzvJOG-cM-Elj9s4K8BAfQ",
+    #"token": "8161622918:AAGXVd-RxMh_Xt3KsAh3ln-UXxpdz5gWTHs",
 }
 
 SUBSCRIPTION_CONFIG = {
