@@ -24,7 +24,6 @@ async def set_bot_commands(bot: Bot):
         BotCommand(command="start", description="Начать"),
         BotCommand(command="extend", description="Продлить подписку"),
         BotCommand(command="support", description="Поддержка"),
-        BotCommand(command="channel", description="Наш канал"),
     ]
     await bot.set_my_commands(commands)
 

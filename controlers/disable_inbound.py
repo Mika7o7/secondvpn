@@ -15,11 +15,19 @@ def disable_inbound(tg_id):
         inbound_id = client[1]
         client_id = client[2]
         email = f"user_{tg_id}_{client_id}@example.com"
-        expiry_time = int(datetime.strptime(client[4], "%Y-%m-%d %H:%M:%S").timestamp() * 1000)
-        port = client[5]
-        private_key = client[6]
-        public_key = client[7]
 
+        date_str = client[4]
+
+        if date_str is not None:
+            try:
+                parsed_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+                expiry_time = int(parsed_date.timestamp() * 1000)
+            except ValueError as ve:
+                logger.warning(f"Неверный формат даты у пользователя {tg_id}: {date_str}")
+                expiry_time = None
+        else:
+            logger.warning(f"Дата окончания подписки отсутствует для пользователя {tg_id}")
+            expiry_time = None
 
         # Записываем время отключения
         disabled_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -27,6 +35,7 @@ def disable_inbound(tg_id):
 
         logger.info(f"Disabled inbound {inbound_id} for user {tg_id}, disabled_at={disabled_at}")
         return disabled_at
+
     except Exception as e:
         logger.error(f"Failed to disable inbound for user {tg_id}: {str(e)}")
         raise

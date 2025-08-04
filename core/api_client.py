@@ -230,3 +230,8 @@ class APIClient:
             raise Exception(f"Failed to update user {username}: Invalid response {response}")
         logger.info(f"Updated user {username} with data: {data}")
         return response
+
+    def get_expired_users(self, limit=30, sort="-created_at"):
+        """Получает пользователей со статусом 'expired'"""
+        endpoint = f"/api/users?limit={limit}&sort={sort}&status=expired"
+        return self.get(endpoint)

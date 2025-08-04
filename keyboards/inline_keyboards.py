@@ -17,10 +17,13 @@ def vless_keyboard() -> InlineKeyboardMarkup:
         ]
     )
 
-def extend_keyboard():
-    """Клавиатура с кнопкой Продлить"""
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💳 Продлить", callback_data="extend_subscription")]
-            ])
-    return keyboard
 
+def extend_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        # [InlineKeyboardButton(text="👤 Личный кабинет", callback_data="profile")],
+        [InlineKeyboardButton(text="💳 Продлить", callback_data="extend_subscription")],
+        # [InlineKeyboardButton(text="➕ Добавить точку", callback_data="add_access")],
+        # [InlineKeyboardButton(text="🧪 Добавить тестовый ключ", callback_data="add_test_access")],
+        [InlineKeyboardButton(text="❓ Помощь", url="https://t.me/Mikaggwp")]
+    ])
+    return keyboard
