@@ -174,19 +174,43 @@ async def confirm_payment(call: types.CallbackQuery, state: FSMContext):
 
             if comment == token_check:
                 amount = float(item.get("paymentAmount", 0))
-                proportion = amount / STANDARD_PRICE_PER_MONTH
-                effective_months = proportion
+
+                # ✅ Проверяем акционные цены
+                matched_months = None
+                for m, price in DISCOUNTED_PRICES.items():
+                    if abs(amount - price) < 0.01:  # совпадает с акционной ценой
+                        matched_months = m
+                        break
+
+                if matched_months is not None:
+                    effective_months = matched_months
+                else:
+                    # иначе считаем пропорционально стандартной цене
+                    proportion = amount / STANDARD_PRICE_PER_MONTH
+                    effective_months = proportion
 
                 try:
-                    new_end_date = update_client_expiry(tg_id=user_id, username=username, months=effective_months)
+                    new_end_date = update_client_expiry(
+                        tg_id=user_id,
+                        username=username,
+                        months=effective_months
+                    )
                     update_client_spend(tg_id=user_id, amount=amount)
                     update_client_status(user_id, "paid")
 
-                    if abs(amount - expected_amount) < 0.01:
-                        message = f"✅ Транзакция на {amount} RUB прошла! Доступ к Zion продлён на {months} мес. до {new_end_date}."
+                    if matched_months is not None:
+                        # Сообщение для акционной цены
+                        message = (
+                            f"✅ Транзакция на {amount} RUB прошла! "
+                            f"Доступ к Zion продлён на {matched_months} мес. до {new_end_date}."
+                        )
                     else:
-                        effective_days = int(proportion * 30)
-                        message = f"✅ Оплата на {amount} RUB получена. Доступ к Zion продлён на {effective_days} дней до {new_end_date}."
+                        # Сообщение для нестандартной суммы
+                        effective_days = int(effective_months * 30)
+                        message = (
+                            f"✅ Оплата на {amount} RUB получена. "
+                            f"Доступ к Zion продлён на {effective_days} дней до {new_end_date}."
+                        )
 
                     keyboard = InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text="Вернуться", callback_data="back_to_start")]
@@ -211,6 +235,7 @@ async def confirm_payment(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer(f"Ошибка проверки транзакции: {str(e)}. Попробуй снова.")
         await state.clear()
         await call.answer()
+
 
 @payments_router.callback_query(lambda call: call.data == "back_to_start")
 async def back_to_start(call: types.CallbackQuery):

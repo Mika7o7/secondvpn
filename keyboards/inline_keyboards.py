@@ -24,6 +24,6 @@ def extend_keyboard():
         [InlineKeyboardButton(text="💳 Продлить", callback_data="extend_subscription")],
         # [InlineKeyboardButton(text="➕ Добавить точку", callback_data="add_access")],
         # [InlineKeyboardButton(text="🧪 Добавить тестовый ключ", callback_data="add_test_access")],
-        [InlineKeyboardButton(text="❓ Помощь", url="https://t.me/Mikaggwp")]
+        [InlineKeyboardButton(text="❓ Помощь", url="https://t.me/Mikaggwp2")]
     ])
     return keyboard

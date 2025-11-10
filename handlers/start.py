@@ -129,7 +129,7 @@ async def send_followup_message(message: types.Message):
 @start_router.message(Command("support"))
 async def support_cmd(message: types.Message):
     await message.answer(
-        "📞 [Написать в поддержку](https://t.me/Mikaggwp)",
+        "📞 [Написать в поддержку](https://t.me/Mikaggwp2)",
         disable_web_page_preview=True,
         parse_mode="Markdown"
     )
