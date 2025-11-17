@@ -1,0 +1,183 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: #0f0;
+    background-color: #000;
+    overflow-y: auto;        /* ← теперь можно скроллить! */
+    min-height: 100vh;
+}
+    #matrix-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        opacity: 0.5;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+    .page {
+        display: none;
+    }
+    .page.active {
+        display: block;
+    }
+    h1 {
+        font-size: 3.5em;
+        animation: glitch 4s infinite;
+        letter-spacing: 12px;
+        text-transform: uppercase;
+        margin: 20px 0;
+    }
+    @keyframes glitch {
+        0%, 100% { text-shadow: 0 0 30px #0f0; }
+        25% { text-shadow: 5px 0 #f00, -5px 0 #00f; }
+        50% { text-shadow: -5px 0 #f00, 5px 0 #00f; }
+        75% { text-shadow: 0 5px #f00, 0 -5px #00f; }
+    }
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+    li {
+        margin: 10px 0;
+    }
+    a {
+        color: #0f0;
+        text-decoration: none;
+    }
+    button, .btn {
+        background: #0f0;
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        display: inline-block;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .menu {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #111;
+        padding: 10px;
+        text-align: center;
+        z-index: 10;
+    }
+    .menu button {
+        background: transparent;
+        color: #0f0;
+        border: 1px solid #0f0;
+    }
+    .key-list {
+        margin: 20px 0;
+    }
+    .key-item {
+        background: #222;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border: 1px solid #0f0;
+    }
+    /* === ПРИВЕТСТВЕННОЕ ОКНО === */
+    #welcome {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 400px;
+        z-index: 100;
+        animation: fadeIn 1s ease-in;
+        text-align: center;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translate(-50%, -60%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    .welcome-text {
+        margin: 20px 0;
+        max-width: 90%;
+        font-size: 14px;
+        color: #0f0;
+    }
+    /* Кнопки платформ — фиксированная ширина, по центру */
+    .platform-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 20px 0;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .platform-btn {
+        background: transparent;
+        border: 1px solid #0f0;
+        color: #0f0;
+        padding: 12px 8px;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .platform-btn:hover {
+        background: #0f0;
+        color: #000;
+    }
+    .platform-btn strong {
+        display: block;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+    .platform-btn small {
+        font-size: 11px;
+        color: #0a0;
+    }
+    /* Кнопка "Понял" */
+    .action-btn {
+        background: #0f0;
+        color: #000;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 30px;
+        display: inline-block;
+        min-width: 200px;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 80px rgba(0,255,0,0.9); }
+      50% { box-shadow: 0 0 100px rgba(0,255,0,1); }
+      100% { box-shadow: 0 0 80px rgba(0,255,0,0.9); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+      20%, 40%, 60%, 80% { transform: translateX(8px); }
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type=number] {
+      -moz-appearance: textfield; /* Firefox */
+    }

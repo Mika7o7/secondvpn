@@ -74,7 +74,7 @@ def setup_scheduler(bot: Bot):
     """Настройка планировщика"""
     scheduler.add_job(
         check_subscriptions,
-        trigger=IntervalTrigger(days=1),
+        trigger=IntervalTrigger(days=5),
         id="check_subscriptions",
         kwargs={"bot": bot}
     )

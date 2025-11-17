@@ -1,6 +1,8 @@
 BOT_CONFIG = {
-    "token": "8161622918:AAGXVd-RxMh_Xt3KsAh3ln-UXxpdz5gWTHs",
+    "token": "7878291456:AAFqosmrUc1NuNGYneUjzWc6tvw9Uqt1VbY",
 }
+
+#"token": "8161622918:AAGXVd-RxMh_Xt3KsAh3ln-UXxpdz5gWTHs",
 
 SUBSCRIPTION_CONFIG = {
     "trial_days": 3,

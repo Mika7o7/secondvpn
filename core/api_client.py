@@ -192,36 +192,52 @@ class APIClient:
             logger.error(f"DELETE request failed on {host} after {self.max_retries} attempts")
         raise Exception(f"DELETE request failed on all hosts: {hosts}")
 
-    def create_user(self, tg_id, name='', xpiry_days=3):
-        """Создаём нового пользователя в Marzban"""
-        username = f"user_{name}_{uuid.uuid4().hex[:8]}"
+    def create_user(self, tg_id: int, username: str = '', expiry_days: int = 3, is_trial: bool = False):
         vless_id = str(uuid.uuid4())
-        data = {
-            "username": username,
-            "proxies": {
-                "vless": {
-                    "id": vless_id,
-                    "flow": "xtls-rprx-vision"
-                }
-            },
-            "inbounds": {
-                "vless": ["VLESS TCP REALITY"]
-            },
-            "expire": None,
-            "data_limit": 0,
-            "data_limit_reset_strategy": "no_reset",
-            "status": "on_hold",
-            "note": f"Trial VPN for tg_id {tg_id}",
-            "on_hold_expire_duration": 259200
-        }
-        response = self.post("/api/user", data)
-        if not response.get("username") or not response.get("links"):
-            raise Exception(f"Failed to create user: Invalid response {response}")
-        subscription_url = response.get("subscription_url", [])
-        if not subscription_url:
-            raise Exception("No VLESS subscription_url found in response")
-        logger.info(f"Created user {username} with subscription_url: {subscription_url}")
-        return subscription_url, username
+    
+        if is_trial or expiry_days <= 3:
+            payload = {
+                "username": username,
+                "proxies": {"vless": {"id": vless_id, "flow": "xtls-rprx-vision"}},
+                "inbounds": {"vless": ["VLESS TCP REALITY"]},
+                "expire": 0,
+                "status": "on_hold",
+                "on_hold_expire_duration": 259200,
+                "note": f"Trial for tg_id {tg_id}"
+            }
+        else:
+            expire_ts = int((datetime.now() + timedelta(days=expiry_days)).timestamp())
+            payload = {
+                "username": username,
+                "proxies": {"vless": {"id": vless_id, "flow": "xtls-rprx-vision"}},
+                "inbounds": {"vless": ["VLESS TCP REALITY"]},
+                "expire": expire_ts,
+                "status": "active",
+                "note": f"Paid key for tg_id {tg_id} ({expiry_days} days)"
+            }
+    
+        # Твой self.post() возвращает dict
+        response = self.post("/api/user", data=payload)
+    
+        # === ПРОВЕРКА ОШИБОК ===
+        if not isinstance(response, dict):
+            raise Exception(f"Marzban вернул не JSON: {response}")
+    
+        if "detail" in response or "username" not in response:
+            error_msg = response.get("detail", str(response))
+            logger.error(f"Marzban create failed: {error_msg}")
+            raise Exception(f"Marzban error: {error_msg}")
+    
+        user_data = response
+    
+        # ВАЖНО: берём subscription_url напрямую — без self.base_url!
+        sub_url = user_data["subscription_url"]
+        if not sub_url.startswith("http"):
+            # Если Marzban отдал только путь — добавляем домен из конфига
+            sub_url = f"https://ggwpvpn.duckdns.org:8000{sub_url}"
+    
+        logger.info(f"Создан пользователь {username} → {'триал' if is_trial else f'{expiry_days} дней'}")
+        return sub_url, user_data["username"]
 
     def update_user(self, username, data):
         """Обновляем пользователя в Marzban"""

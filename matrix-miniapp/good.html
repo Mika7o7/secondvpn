@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MATRIX VPN</title>
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;color:#0f0;font-family:'Courier New',monospace}
+  #bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.2;z-index:-1}
+  canvas{position:fixed;top:0;left:0;z-index:1;opacity:0.7}
+  .container{position:relative;z-index:2;padding:20px;text-align:center}
+  h1{font-size:3.5em;animation:glitch 4s infinite;letter-spacing:12px;text-transform:uppercase}
+  @keyframes glitch{
+    0%,100%{text-shadow:0 0 30px #0f0}
+    25%{text-shadow:5px 0 #f00,-5px 0 #00f}
+    50%{text-shadow:-5px 0 #f00,5px 0 #00f}
+    75%{text-shadow:0 5px #f00,0 -5px #00f}
+  }
+  .btn{background:#001a00;border:2px solid #0f0;padding:15px;margin:12px auto;border-radius:12px;cursor:pointer;transition:.3s;display:block;max-width:420px}
+  .btn:hover{background:#003300;transform:scale(1.05);box-shadow:0 0 25px #0f0}
+  .btn.red{background:#300;border-color:#f00}
+  .btn.red:hover{background:#500;box-shadow:0 0 25px #f00}
+  pre{background:#000;border:2px solid #0f0;padding:15px;border-radius:10px;font-size:11px;word-break:break-all;margin:20px auto;max-width:90%;overflow-x:auto}
+  #qr{margin:30px auto;display:block;border:6px solid #0f0;border-radius:15px;padding:10px;background:#000}
+  .tab{font-size:1.3em;margin:10px;padding:12px;border:2px solid #0f0;border-radius:8px;display:inline-block;min-width:180px;cursor:pointer}
+  .tab.active{background:#003300}
+  .section{display:none}
+  .section.active{display:block}
+  .key-item{border:1px solid #0f0;margin:15px;padding:15px;border-radius:10px;background:#001100}
+  input[type=text]{background:#000;border:2px solid #0f0;padding:12px;color:#0f0;font-size:16px;width:80%;margin:15px auto;display:block;border-radius:8px}
+  .days{color:#0f0;font-weight:bold}
+  .expired{color:#f00}
+</style>
+</head>
+<body>
+
+<img id="bg" src="images/matrix.jpeg" onerror="this.style.display='none'">
+<canvas id="canvas"></canvas>
+
+<div class="container">
+  <h1>M A T R I X  V P N</h1>
+
+  <div class="tab active" onclick="openTab('servers')">Servers</div>
+  <div class="tab" onclick="openTab('mykeys')">My Keys</div>
+  <div class="tab" onclick="openTab('referral')">Referral</div>
+
+  <!-- Серверы -->
+  <div id="servers" class="section active">
+    <h2>Create New Key</h2>
+    <input type="text" id="customName" placeholder="Enter key name (e.g. iPhone 16 Pro)" value="">
+    <div id="serverList">Loading servers...</div>
+  </div>
+
+  <!-- Мои ключи -->
+  <div id="mykeys" class="section">
+    <h2>My Active Keys</h2>
+    <div class="btn" onclick="loadMyKeys()">Refresh List</div>
+    <div id="keysList">Click refresh</div>
+  </div>
+
+  <!-- Рефералы -->
+  <div id="referral" class="section">
+    <h2>Your Referral Link</h2>
+    <pre id="refLink">Generating...</pre>
+    <div class="btn" onclick="copyRef()">Copy Link</div>
+    <p><small>Who comes from your link — gets +15 days bonus on first key!</small></p>
+  </div>
+</div>
+
+<script>
+// === Крутой дождь на английском + японская катакана ===
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
+const fontSize = 16;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function draw() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0f0';
+  ctx.font = fontSize + 'px monospace';
+  for (let i = 0; i < drops.length; i++) {
+    const text = letters[Math.floor(Math.random() * letters.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(draw, 35);
+
+// === Настройки ===
+const PROXY = "http://127.0.0.1:8000";  // ← поменяй если панель на другом порту
+let MY_REF = localStorage.getItem("matrix_ref") || Math.random().toString(36).substr(2,8).toUpperCase();
+localStorage.setItem("matrix_ref", MY_REF);
+
+// Рефералка
+document.getElementById("refLink").textContent = location.origin + location.pathname + "?ref=" + MY_REF;
+
+// Если зашли по рефке — сохраняем и даём бонус
+const urlParams = new URLSearchParams(location.search);
+const refFromUrl = urlParams.get('ref');
+if (refFromUrl && refFromUrl.length >= 6) {
+  localStorage.setItem("matrix_ref", refFromUrl);
+  MY_REF = refFromUrl;
+  alert(`Referral activated: ${refFromUrl}\nYou get +15 days bonus on your first key!`);
+}
+
+// Табы
+function openTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.tab[onclick="openTab('${name}')"]`).classList.add('active');
+  document.getElementById(name).classList.add('active');
+  if (name === 'mykeys') loadMyKeys();
+}
+
+// === Загрузка серверов ===
+fetch(PROXY + "/api/inbounds")
+  .then(r => r.json())
+  .then(data => {
+    let html = "";
+    const list = [];
+    for (let k in data) list.push(...data[k]);
+    const enabled = list.filter(s => s.enable);
+    enabled.forEach(s => {
+      const remark = s.remark || s.tag || "Unknown";
+      html += `<div class="btn" onclick="createKey('${s.tag}', '${remark}', '${s.host}', ${s.port})">
+        ${remark} ${getFlag(remark)}<br><small>${s.host}:${s.port}</small>
+      </div>`;
+    });
+    document.getElementById("serverList").innerHTML = html || "<h2 style='color:#f00'>No active servers</h2>";
+  })
+  .catch(e => {
+    document.getElementById("serverList").innerHTML = `<h2 style="color:#f00">Panel connection error<br>${e}</h2>`;
+  });
+
+function getFlag(text) {
+  const map = {ru:"RU", россия:"RU", moscow:"RU", de:"DE", germany:"DE", frankfurt:"DE", nl:"NL", amsterdam:"NL", us:"US", usa:"US", sg:"SG", jp:"JP", fi:"FI"};
+  text = text.toLowerCase();
+  for (let k in map) if (text.includes(k)) return map[k];
+  return "Globe";
+}
+
+// === Создание ключа с кастомным именем ===
+async function createKey(tag, remark, host, port) {
+  const custom = document.getElementById("customName").value.trim() || remark;
+  const username = "m_" + Date.now() + "_" + Math.random().toString(36).substr(2,5);
+
+  // Бонус +15 дней если пришёл по рефке и это первый ключ
+  const bonusDays = (refFromUrl && !localStorage.getItem("bonus_given")) ? 15 : 0;
+  if (bonusDays > 0) localStorage.setItem("bonus_given", "yes");
+
+  const expire = Math.floor(Date.now()/1000) + (30 + bonusDays) * 86400;
+
+  try {
+    await fetch(PROXY + "/api/user/" + username, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        proxies: {[tag]: {}},
+        expire: expire,
+        data_limit: 0
+      })
+    });
+
+    const link = `vless://${username}@${location.hostname}:443?security=tls&type=tcp&headerType=none#MATRIX-${custom} (${MY_REF})`;
+    
+    document.getElementById("servers").innerHTML = `
+      <h2>KEY CREATED ${bonusDays ? "+15 days bonus!" : ""}</h2>
+      <div id="qr"></div>
+      <pre>${link}</pre>
+      <div class="btn" onclick="copy('${link}')">COPY LINK</div>
+      <div class="btn red" onclick="location.reload()">NEW KEY</div>
+    `;
+    QRCode.toCanvas(document.getElementById('qr'), link, {width: 300});
+  } catch(e) {
+    alert("Error: " + e);
+  }
+}
+
+function copy(text) {
+  navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+}
+
+function copyRef() {
+  const link = location.origin + location.pathname + "?ref=" + MY_REF;
+  navigator.clipboard.writeText(link).then(() => alert("Referral link copied!"));
+}
+
+// === Мои ключи с продлением ===
+async function loadMyKeys() {
+  const res = await fetch(PROXY + "/api/users");
+  const allUsers = await res.json();
+  
+  // Ищем свои ключи: начинаются на m_ или содержат наш реф-код
+  const myUsers = allUsers.filter(u => u.username && (u.username.startsWith("m_") || u.username.includes(MY_REF)));
+
+  let html = "";
+  if (myUsers.length === 0) {
+    html = "<p>No keys yet</p>";
+  } else {
+    for (let user of myUsers) {
+      const daysLeft = user.expire ? Math.max(0, Math.ceil((user.expire * 1000 - Date.now()) / 86400000)) : 0;
+      const status = daysLeft > 0 ? `<span class="days">${daysLeft} days left</span>` : `<span class="expired">EXPIRED</span>`;
+      const link = `vless://${user.username}@${location.hostname}:443?security=tls#MATRIX-${user.username}`;
+      
+      html += `
+        <div class="key-item">
+          <strong>${user.username}</strong><br>
+          ${status}<br>
+          <pre style="font-size:10px;margin:10px 0">${link}</pre>
+          <div class="btn" onclick="copy('${link}')">Copy</div>
+          ${daysLeft <= 10 ? `<div class="btn red" onclick="extendKey('${user.username}')">+30 days</div>` : ''}
+        </div>`;
+    }
+  }
+  document.getElementById("keysList").innerHTML = html;
+}
+
+// Продление ключа +30 дней
+async function extendKey(username) {
+  if (!confirm("Extend +30 days?")) return;
+  
+  const res = await fetch(PROXY + "/api/user/" + username);
+  const user = await res.json();
+  
+  const newExpire = (user.expire || Math.floor(Date.now()/1000)) + 30*86400;
+  
+  await fetch(PROXY + "/api/user/" + username, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ expire: newExpire })
+  });
+  
+  alert("Extended +30 days!");
+  loadMyKeys();
+}
+</script>
+</body>
+</html>

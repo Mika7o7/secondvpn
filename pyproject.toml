@@ -1,23 +1,35 @@
-[project]
+[tool.poetry]
 name = "second-vpn"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "mikaohanyan881", email = "mikaohanyan881@gmail.com"}
-]
+description = "Премиум VPN-бот на Marzban с мини-аппом и Matrix-дизайном"
+authors = ["mikaohanyan881 <mikaohanyan881@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "aiogram>=3.18.0",
-    "requests>=2.32.3",
-    "apscheduler>=3.11.0,<4.0.0",
-    "aiohttp>=3.10.10,<3.11.0",
-    "yookassa>=3.5.0",
-]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"          # ← ЭТО САМОЕ ГЛАВНОЕ! Было старое значение
+
+# Твои текущие зависимости
+aiogram = "^3.18.0"
+requests = "^2.32.3"
+apscheduler = "^3.11.0"
+aiohttp = "^3.10.10"
+
+# Для FastAPI-прокси (обязательно для мини-аппа)
+fastapi = "^0.115.0"
+uvicorn = { extras = ["standard"], version = "^0.30.0" }
+httpx = "^0.28.0"
+
+# Полезные плюшки
+python-dotenv = "^1.0.1"
+qrcode = { extras = ["pil"], version = "^7.4.2" }
+pillow = "^10.4.0"
+
+# Дев-зависимости (необязательно, но удобно)
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+ruff = "^0.6.0"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-package-mode = false
